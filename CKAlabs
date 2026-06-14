@@ -1,0 +1,151 @@
+CKA Module 1 — Core Concepts Labs
+Lab 1.1 — Create a Deployment
+Create a Deployment named web-deploy:
+
+image: nginx:latest
+
+replicas: 3
+
+label: app=web
+
+Expose it as a ClusterIP service on port 80.
+
+Lab 1.2 — Create a Pod from YAML
+Write a YAML file named redis-pod.yaml:
+
+Pod name: redis
+
+image: redis:7
+
+containerPort: 6379
+
+Apply it and verify logs.
+
+Lab 1.3 — Create a DaemonSet
+Create a DaemonSet named log-agent:
+
+image: busybox
+
+command: ["sh", "-c", "while true; do echo log-agent; sleep 5; done"]
+
+Verify it runs on all nodes.
+
+Lab 1.4 — Create a Job
+Create a Job named pi-job that runs:
+
+Code
+perl -Mbignum=bpi -wle "print bpi(2000)"
+🧭 CKA Module 2 — Scheduling Labs
+Lab 2.1 — Taints & Tolerations
+Taint worker‑1:
+
+Code
+kubectl taint nodes k8s-worker-1 key=value:NoSchedule
+Create a Pod that can run on that node using tolerations.
+
+Lab 2.2 — Node Selectors
+Create a Pod that runs only on worker‑2:
+
+Add label to worker‑2:
+
+Code
+kubectl label node k8s-worker-2 disk=ssd
+Pod must have:
+
+Code
+nodeSelector:
+  disk: ssd
+Lab 2.3 — Affinity
+Create a Deployment that uses podAntiAffinity so replicas never land on the same node.
+
+🌐 CKA Module 3 — Networking Labs
+Lab 3.1 — Create a NetworkPolicy
+Deny all ingress to Pods labeled app=db except from Pods labeled app=api.
+
+Lab 3.2 — Debug DNS
+Deploy a busybox Pod:
+
+Code
+kubectl run dns-test --image=busybox:1.36 -- sleep 3600
+Inside the Pod:
+
+Code
+nslookup kubernetes.default
+Fix DNS if it fails.
+
+Lab 3.3 — NodePort Service
+Expose nginx as a NodePort service on port 30080.
+
+Test from your laptop:
+
+Code
+curl http://<worker-node-ip>:30080
+📦 CKA Module 4 — Storage Labs
+Lab 4.1 — Create a PersistentVolume
+Create a PV:
+
+name: local-pv
+
+capacity: 2Gi
+
+accessMode: ReadWriteOnce
+
+hostPath: /data/pv1
+
+Lab 4.2 — Create a PVC
+Create a PVC:
+
+name: local-pvc
+
+request: 1Gi
+
+Bind it to the PV.
+
+Lab 4.3 — Pod with PVC
+Create a Pod that mounts the PVC at /mnt/data.
+
+Write a file inside the Pod and verify it persists.
+
+🔥 CKA Module 5 — Troubleshooting Labs
+These are the labs that make you dangerous.
+
+Lab 5.1 — CrashLoopBackOff
+A Pod is stuck in CrashLoopBackOff.
+
+Fix it using:
+
+Code
+kubectl logs
+kubectl describe
+kubectl edit
+Lab 5.2 — Node NotReady
+Simulate:
+
+Code
+systemctl stop kubelet
+Fix the node and return it to Ready.
+
+Lab 5.3 — CNI Failure
+Delete CNI config:
+
+Code
+rm -rf /etc/cni/net.d/*
+Fix the node so Pods get IPs again.
+
+Lab 5.4 — kube-proxy Failure
+Delete kube-proxy Pod:
+
+Code
+kubectl delete pod -n kube-system -l k8s-app=kube-proxy
+Fix the cluster if Services break.
+
+Lab 5.5 — etcd Backup & Restore
+Backup:
+
+Code
+ETCDCTL_API=3 etcdctl snapshot save /root/backup.db \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key
+Restore the cluster from the snapshot.
