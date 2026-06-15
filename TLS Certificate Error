@@ -1,52 +1,47 @@
-Kubernetes TLS Certificate Error — Documentation for GitHub
-markdown
-# Kubernetes TLS Certificate Validation Error
+# Kubernetes TLS Certificate Error — Resolution Guide
 
-## ❗ Problem
-Running `kubectl apply -f nginx-deploy.yaml` resulted in the following error:
+## ❗ Error Summary
+When applying a Kubernetes manifest:
 
-error: error validating "nginx-deploy.yaml": error validating data: failed to download openapi: Get "https://192.168.77.132:6443/openapi/v2?timeout=32s": tls: failed to verify certificate: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes"); if you choose to ignore these errors, turn validation off with --validate=false
+```bash
+kubectl apply -f nginx-deploy.yaml
+You may encounter:
 
 Code
+tls: failed to verify certificate: x509: certificate signed by unknown authority
+This happens when kubectl cannot validate the Kubernetes API server certificate.
 
-## 🎯 Root Cause
-`kubectl` was not using the correct Kubernetes **kubeconfig** file.  
-As a result, it could not validate the API server’s TLS certificate, causing the `x509: certificate signed by unknown authority` error.
+🎯 Root Cause
+kubectl is not using the correct kubeconfig file.
 
-This typically happens when:
-- The kubeconfig is missing
-- The kubeconfig is not loaded into the environment
-- The kubeconfig is not located at `$HOME/.kube/config`
-- The user is running commands as `root` without exporting the correct config
+Common reasons:
 
-## ✅ Resolution
+Missing $HOME/.kube/config
 
-### 1. Export the correct kubeconfig
+Running as root without exporting the correct config
+
+admin.conf not copied to the user’s kube directory
+
+Incorrect or corrupted kubeconfig
+
+✅ Resolution Steps
+1. Export the correct kubeconfig
+bash
 export KUBECONFIG=/etc/kubernetes/admin.conf
-
-Code
-
-### 2. Verify cluster access
+2. Verify access
+bash
 kubectl get nodes
-
-Code
-
-### 3. Make the fix permanent
+3. Make the fix persistent
+bash
 echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> ~/.bashrc
 source ~/.bashrc
-
-Code
-
-### 4. (Optional) Copy kubeconfig to default location
-If needed:
-mkdir -p HOME/.kube cp /etc/kubernetes/admin.conf $HOME/.kube/config chown $(id -u):(id -g) $HOME/.kube/config
-
-Code
-
-### 5. Re-run the deployment
+4. (Optional) Copy kubeconfig to default location
+bash
+mkdir -p $HOME/.kube
+cp /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+5. Re-run your manifest
+bash
 kubectl apply -f nginx-deploy.yaml
-
-Code
-
-## ✔️ Result
-The TLS validation error is resolved and `kubectl` can succ
+✔️ Result
+kubectl can now authenticate properly and communicate with the Kubernetes API server without TLS validation errors.
